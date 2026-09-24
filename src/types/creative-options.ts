@@ -85,7 +85,8 @@ export interface CreativeDecision<T = Record<string, unknown>> {
   selectedOptionId: string;
   recommendedOptionId?: string;
   userModified?: boolean;
-  generationStatus: 'idle' | 'generating' | 'ready' | 'error';
+  // Independent per-category lifecycle. 'error' is retained for backward compatibility.
+  generationStatus: 'idle' | 'generating' | 'ready' | 'failed' | 'rejected' | 'error';
   moroDialogue?: {
     text: string;
     textAr: string;

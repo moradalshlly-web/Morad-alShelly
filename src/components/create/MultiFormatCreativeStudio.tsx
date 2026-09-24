@@ -19,9 +19,7 @@ import {
   SupportedFileExtension,
   UploadedInputFile,
 } from '../../types/creative-options';
-import {
-  MoroCreativeOptionService,
-} from '../../services/creative/CreativeOptionProviders';
+import { MoroCore } from '../../services/core/MoroCore';
 import { ThreeOptionGenerator } from '../creative/ThreeOptionGenerator';
 import {
   Sparkles,
@@ -227,7 +225,7 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       uploadedFilesSummary: uploadedFiles.map((f) => `${f.name} (${f.extension})`),
     };
 
-    const generatedDecisions = await MoroCreativeOptionService.generateInitialDecisions(contextPayload);
+    const generatedDecisions = await MoroCore.generateCreativeDecisions(contextPayload);
     setDecisions(generatedDecisions);
 
     await new Promise((res) => setTimeout(res, 500));
@@ -252,7 +250,7 @@ export const MultiFormatCreativeStudio: React.FC = () => {
     const current = decisions[category];
     if (!current) return;
 
-    const updated = MoroCreativeOptionService.selectOption(current, optionId);
+    const updated = MoroCore.selectOption(current, optionId);
     setDecisions({
       ...decisions,
       [category]: updated,
@@ -272,7 +270,7 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       style: selectedStyle,
     };
 
-    const updated = await MoroCreativeOptionService.replaceCategorySingle(
+    const updated = await MoroCore.regenerateOne(
       category,
       optionId,
       current,
@@ -303,7 +301,7 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       style: selectedStyle,
     };
 
-    const updated = await MoroCreativeOptionService.replaceCategoryAll(
+    const updated = await MoroCore.regenerateCategory(
       category,
       current,
       contextPayload
@@ -331,6 +329,18 @@ export const MultiFormatCreativeStudio: React.FC = () => {
 
     const title = projectTitle.trim() || (isRtl ? 'مشروع استوديو مورو الإبداعي' : 'Moro Studio Production');
 
+    // Moro Core: promote the raw input to first-class sources and build the
+    // single shared project context that all modules will read from.
+    const sources = MoroCore.sourcesFromInput(rawText, uploadedFiles);
+    const moroContext = MoroCore.buildProjectContext({
+      title,
+      sources,
+      style: selectedStyle,
+      targetDurationSeconds: targetDuration,
+      aspectRatio,
+      understanding: understandingState,
+    });
+
     const project = await createProject({
       userId: user?.id || 'usr_moro_director',
       title,
@@ -353,6 +363,8 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       },
       userPerspectiveDescription: userPerspectiveText,
       creativeDecisions: decisions,
+      sources,
+      moroContext,
       selectedVoice: selectedVoiceOption?.title,
       selectedTone: selectedToneOption?.title,
       selectedImages: selectedImageOption?.preview ? [selectedImageOption.preview] : [],

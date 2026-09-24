@@ -7,3 +7,4 @@ export * from './suggest';
 export * from './timeline';
 export * from './export';
 export * from './creative-options';
+export * from './core';

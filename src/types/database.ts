@@ -7,6 +7,7 @@
 import { ProviderType } from './providers';
 import { QualityRating, SpeedRating } from './models';
 import { MultiFormatInputPayload, ProjectCreativeDecisions } from './creative-options';
+import { ProjectSource, MoroProjectContext } from './core';
 
 export interface User {
   id: string;
@@ -37,6 +38,10 @@ export interface Project {
   originalInput?: MultiFormatInputPayload;
   userPerspectiveDescription?: string;
   creativeDecisions?: ProjectCreativeDecisions;
+  // Moro Core: first-class sources + the shared project understanding context
+  // that every current and future module reads from.
+  sources?: ProjectSource[];
+  moroContext?: MoroProjectContext;
   selectedVoice?: string;
   selectedTone?: string;
   selectedImages?: string[];

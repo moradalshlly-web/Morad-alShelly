@@ -546,6 +546,50 @@ export class MoroCreativeOptionService {
   private static imageProvider: ImageOptionProvider = new MockImageOptionProvider();
 
   /**
+   * Resolves the registered option provider for a creative category.
+   * Kept internal so Moro Core and future modules share one provider set.
+   */
+  static getProvider(category: CreativeCategory): CreativeOptionProvider<any> {
+    switch (category) {
+      case 'voice':
+        return this.voiceProvider;
+      case 'tone':
+        return this.toneProvider;
+      case 'scene':
+        return this.sceneProvider;
+      case 'image':
+        return this.imageProvider;
+      default:
+        throw new Error(`No creative option provider registered for category: "${category}"`);
+    }
+  }
+
+  /**
+   * Generates a full 3-option decision for a SINGLE category, independently of
+   * every other category. This is the building block for the per-output
+   * "generate three" contract exposed through Moro Core.
+   */
+  static async generateCategory(
+    category: CreativeCategory,
+    context: CreativeContextPayload
+  ): Promise<CreativeDecision> {
+    const provider = this.getProvider(category);
+    const options = await provider.generateAllOptions(context);
+    const recommended = options.find((o) => o.recommended);
+
+    return {
+      category,
+      categoryLabelEn: provider.categoryLabelEn,
+      categoryLabelAr: provider.categoryLabelAr,
+      options,
+      selectedOptionId: recommended?.id || options[0].id,
+      recommendedOptionId: recommended?.id,
+      userModified: false,
+      generationStatus: 'ready',
+    };
+  }
+
+  /**
    * Generates initial decisions across all 4 categories (Voice, Tone, Scene, Image)
    */
   static async generateInitialDecisions(context: CreativeContextPayload): Promise<ProjectCreativeDecisions> {
