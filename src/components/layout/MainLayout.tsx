@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { StudioHeader } from './StudioHeader';
 import { StudioSidebar } from './StudioSidebar';
+import { Menu } from 'lucide-react';
 import { useStudio } from '../../context/StudioContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { NewProjectModal } from '../projects/NewProjectModal';
@@ -15,19 +16,23 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const { notification, clearNotification } = useStudio();
   const { isRtl } = useLanguage();
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#090b0e] text-[#e2e8f0] overflow-hidden">
       {/* Top Bar */}
-      <StudioHeader onOpenNewProjectModal={() => setIsNewProjectModalOpen(true)} />
+      <StudioHeader
+        onOpenNewProjectModal={() => setIsNewProjectModalOpen(true)}
+        onMenuClick={() => setSidebarOpen(true)}
+      />
 
       {/* Main Body */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <StudioSidebar />
+        {/* Sidebar (drawer on mobile, permanent on desktop) */}
+        <StudioSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Viewport Canvas */}
-        <main className="flex-1 overflow-y-auto relative bg-[#090b0e]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative bg-[#090b0e]">
           {children}
         </main>
       </div>

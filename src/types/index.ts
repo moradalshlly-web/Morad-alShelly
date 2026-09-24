@@ -1,4 +1,5 @@
 export * from './providers';
+export * from './content-understanding';
 export * from './models';
 export * from './ai-router';
 export * from './database';

@@ -7,6 +7,7 @@
 import { ProviderType } from './providers';
 import { QualityRating, SpeedRating } from './models';
 import { MultiFormatInputPayload, ProjectCreativeDecisions } from './creative-options';
+import { ProjectUnderstanding } from './content-understanding';
 
 export interface User {
   id: string;
@@ -40,6 +41,7 @@ export interface Project {
   selectedVoice?: string;
   selectedTone?: string;
   selectedImages?: string[];
+  understanding?: ProjectUnderstanding;
   createdAt: string;
   updatedAt: string;
 }

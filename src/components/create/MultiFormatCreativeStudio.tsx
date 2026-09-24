@@ -23,6 +23,9 @@ import {
   MoroCreativeOptionService,
 } from '../../services/creative/CreativeOptionProviders';
 import { ThreeOptionGenerator } from '../creative/ThreeOptionGenerator';
+import { parseSourceFile } from '../../services/content-understanding';
+import { ContentUnderstandingService } from '../../services/content-understanding';
+import { ParsedFileResult, ProjectUnderstanding } from '../../types/content-understanding';
 import {
   Sparkles,
   Upload,
@@ -82,6 +85,10 @@ export const MultiFormatCreativeStudio: React.FC = () => {
   const [decisions, setDecisions] = useState<ProjectCreativeDecisions | null>(null);
   const [activeCategoryTab, setActiveCategoryTab] = useState<'voice' | 'tone' | 'scene' | 'image'>('scene');
 
+  // 5. Parsed Source Files & Content Understanding
+  const [parsedFileResults, setParsedFileResults] = useState<ParsedFileResult[]>([]);
+  const [projectUnderstanding, setProjectUnderstanding] = useState<ProjectUnderstanding | null>(null);
+
   // Handle Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -106,25 +113,41 @@ export const MultiFormatCreativeStudio: React.FC = () => {
     }
   };
 
-  const processFiles = (files: File[]) => {
-    const newItems: UploadedInputFile[] = files.map((file) => {
+  const processFiles = async (files: File[]) => {
+    const newItems: UploadedInputFile[] = [];
+    const newParsed: ParsedFileResult[] = [];
+
+    for (const file of files) {
+      const fileId = `upload_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       const ext = file.name.split('.').pop()?.toLowerCase() || 'unknown';
       const isImg = file.type.startsWith('image/');
       const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
 
       let extractedSummary = '';
-      if (ext === 'txt') {
-        extractedSummary = 'Plaintext screenplay dialogue & stage directions parsed.';
-      } else if (ext === 'pdf') {
-        extractedSummary = 'Extracted multi-scene sluglines, character dialogue, and action beats.';
-      } else if (ext === 'docx') {
-        extractedSummary = 'Parsed formatted narrative synopsis and production notes.';
-      } else if (isImg) {
-        extractedSummary = 'Visual keyframe anchor with color palette and lighting extraction.';
+
+      if (isImg) {
+        // Images are visual references — honest description, no fake analysis
+        extractedSummary = isRtl
+          ? 'صورة مرجعية مرفقة'
+          : 'Image reference attached';
+      } else {
+        // Use the real SourceFileParser system
+        const parsed = await parseSourceFile(file, fileId);
+        newParsed.push(parsed);
+
+        if (parsed.status === 'parsed' && parsed.textPreview) {
+          extractedSummary = parsed.textPreview.slice(0, 120) + (parsed.textPreview.length > 120 ? '…' : '');
+        } else if (parsed.status === 'not-implemented') {
+          extractedSummary = isRtl
+            ? 'الملف مقبول — التحليل غير متصل بعد'
+            : 'File accepted — parsing not yet connected';
+        } else {
+          extractedSummary = parsed.errorMessage || 'Parse error';
+        }
       }
 
-      return {
-        id: `upload_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      newItems.push({
+        id: fileId,
         name: file.name,
         size: file.size,
         mimeType: file.type || 'application/octet-stream',
@@ -132,10 +155,11 @@ export const MultiFormatCreativeStudio: React.FC = () => {
         previewUrl,
         extractedTextSummary: extractedSummary,
         uploadTimestamp: new Date().toISOString(),
-      };
-    });
+      });
+    }
 
     setUploadedFiles((prev) => [...prev, ...newItems]);
+    setParsedFileResults((prev) => [...prev, ...newParsed]);
     showNotification(
       isRtl ? `تمت إضافة ${newItems.length} ملف(ات) إلى سياق المشروع` : `Added ${newItems.length} file(s) to project context`,
       'info'
@@ -165,7 +189,9 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       size: 420000,
       mimeType: 'application/pdf',
       extension: 'pdf',
-      extractedTextSummary: 'Slugline: INT. SUBTERRANEAN ARBORETUM - NIGHT. Characters: Dr. Vance, Orion Unit.',
+      extractedTextSummary: isRtl
+        ? 'ملف PDF مقبول — تحليل النص غير متصل بعد'
+        : 'PDF file accepted — text parsing not yet connected',
       uploadTimestamp: new Date().toISOString(),
     };
 
@@ -206,6 +232,17 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       stage: 'understanding',
       progressPercent: 55,
     }));
+
+    // Build structured project understanding — no invented information
+    const understanding = ContentUnderstandingService.buildUnderstanding({
+      rawText,
+      userPerspective: userPerspectiveGiven,
+      projectTitle,
+      selectedStyle,
+      parsedFiles: parsedFileResults,
+      uploadedFileMetas: uploadedFiles.map((f) => ({ id: f.id, name: f.name, extension: f.extension })),
+    });
+    setProjectUnderstanding(understanding);
 
     await new Promise((res) => setTimeout(res, 650));
 
@@ -356,6 +393,7 @@ export const MultiFormatCreativeStudio: React.FC = () => {
       selectedVoice: selectedVoiceOption?.title,
       selectedTone: selectedToneOption?.title,
       selectedImages: selectedImageOption?.preview ? [selectedImageOption.preview] : [],
+      understanding: projectUnderstanding || undefined,
     });
 
     openProjectWorkspace(project.id);

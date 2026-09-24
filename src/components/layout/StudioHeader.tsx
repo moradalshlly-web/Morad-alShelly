@@ -8,20 +8,30 @@ import React from 'react';
 import { useStudio } from '../../context/StudioContext';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
-import { Plus, Sparkles, Wand2 } from 'lucide-react';
+import { Plus, Sparkles, Wand2, Menu } from 'lucide-react';
 
 interface StudioHeaderProps {
   onOpenNewProjectModal: () => void;
+  onMenuClick: () => void;
 }
 
-export const StudioHeader: React.FC<StudioHeaderProps> = ({ onOpenNewProjectModal }) => {
+export const StudioHeader: React.FC<StudioHeaderProps> = ({ onOpenNewProjectModal, onMenuClick }) => {
   const { activeTab, setActiveTab, activeProject, user } = useStudio();
   const { t, isRtl } = useLanguage();
 
   return (
-    <header className="h-14 border-b border-slate-800/80 bg-[#0c0f14]/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+    <header className="h-14 border-b border-slate-800/80 bg-[#0c0f14]/90 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0">
+      {/* Zone 0: Mobile menu button */}
+      <button
+        onClick={onMenuClick}
+        className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded transition-colors cursor-pointer shrink-0"
+        aria-label={isRtl ? 'فتح القائمة' : 'Open menu'}
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Zone 1: Single text element wordmark */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 min-w-0">
         <button
           onClick={() => setActiveTab('home')}
           className="text-lg font-bold tracking-tight text-white hover:text-amber-400 transition-colors cursor-pointer flex items-center gap-2"

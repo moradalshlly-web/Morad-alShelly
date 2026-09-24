@@ -29,9 +29,9 @@ export const HomeDashboard: React.FC = () => {
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8 sm:space-y-12">
       {/* 1. Studio Hero Section */}
-      <section className="relative overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-b from-[#111622] to-[#0a0c10] p-8 md:p-12">
+      <section className="relative overflow-hidden rounded-xl border border-slate-800/80 bg-gradient-to-b from-[#111622] to-[#0a0c10] p-5 sm:p-8 md:p-12">
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-400">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />

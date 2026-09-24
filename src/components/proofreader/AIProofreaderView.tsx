@@ -107,7 +107,7 @@ export const AIProofreaderView: React.FC = () => {
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Header */}
       <div className="border-b border-slate-800 pb-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
