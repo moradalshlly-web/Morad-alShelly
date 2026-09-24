@@ -1,6 +1,6 @@
 /**
- * Gemini Provider Adapter (Pluggable AI Studio Integration)
- * Ready to receive server-side API keys in Phase 2.
+ * Gemini Provider Adapter (Pluggable Provider Integration)
+ * Ready to receive API keys in Phase 2.
  * Moro AI never depends exclusively on this provider; it is strictly an adapter.
  */
 
@@ -21,7 +21,7 @@ export class GeminiProviderAdapter extends BaseProvider implements TextProvider 
   readonly version = '2.4.0';
 
   constructor(apiKey?: string) {
-    super(apiKey || process.env.GEMINI_API_KEY);
+    super(apiKey || import.meta.env.VITE_GEMINI_API_KEY);
   }
 
   protected async pingEndpoint(): Promise<ProviderStatus> {

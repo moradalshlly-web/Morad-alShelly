@@ -1,6 +1,1 @@
-{
-  "name": "Moro AI",
-  "description": "Moro AI is a multi-provider creative AI platform for creating stories, images, videos, voices, dubbing, animation and social-media content.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
+{"name": "Moro AI", "description": "Moro AI is a multi-provider creative AI platform for creating stories, images, videos, voices, dubbing, animation and social-media content."}

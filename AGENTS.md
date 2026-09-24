@@ -3,7 +3,7 @@
 ## Stack
 - Pure frontend: Vite 8 + React 19 + TypeScript + Tailwind CSS v4
 - No backend/database. Data persists via `LocalStorageAdapter` in the browser.
-- AI providers are stubbed: `MockProviderAdapter` is fully functional; `GeminiProviderAdapter` is a Phase-2 stub that reads `process.env.GEMINI_API_KEY` but does not call the API yet. No credentials are required to boot or use the preview.
+- AI providers are stubbed: `MockProviderAdapter` is fully functional; `GeminiProviderAdapter` is a Phase-2 stub that reads `import.meta.env.VITE_GEMINI_API_KEY` but does not call the API yet. No credentials are required to boot or use the preview.
 
 ## Running
 - `docker compose -f docker-compose.base44.yml up -d`
@@ -16,4 +16,4 @@
 - Healthcheck in compose polls `http://localhost:3000/`.
 
 ## Notes
-- Vite config uses `__dirname` (triggers a native-config-loader warning); harmless, do not "fix" unless migrating to `import.meta.dirname`.
+- Vite config uses `import.meta.dirname` for the `@` path alias (portable across Node 20.11+/22).
