@@ -1,7 +1,14 @@
 import { CreativeCategory, CreativeDecision, ProjectCreativeDecisions, UploadedInputFile } from '../../types/creative-options';
 import { ProjectUnderstanding } from '../../types/content-understanding';
 import { RouteRequest } from '../../types/ai-router';
-import { CreativeModuleDescriptor, CreativePackage, CreativePackageSelection, MoroProjectContext, ProjectSource, ProjectSourceKind } from '../../types/core';
+import {
+  CreativeModuleDescriptor,
+  CreativePackage,
+  CreativePackageSelection,
+  MoroProjectContext,
+  ProjectSource,
+  ProjectSourceKind,
+} from '../../types/core';
 import { CreativeContextPayload, MoroCreativeOptionService } from '../creative/CreativeOptionProviders';
 import { aiRouter } from '../ai-router';
 import { ContentUnderstandingAdapter } from './ContentUnderstandingAdapter';
@@ -12,12 +19,24 @@ const uid = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toStrin
 /** Provider-independent orchestration boundary for Moro creative workflows. */
 export class MoroCore {
   static createTextSource(text: string, label = 'Direct text input'): ProjectSource {
-    return { id: uid('src'), kind: 'text', label, rawText: text, extractedSummary: text.trim().slice(0, 240), createdAt: nowIso() };
+    return {
+      id: uid('src'),
+      kind: 'text',
+      label,
+      rawText: text,
+      extractedSummary: text.trim().slice(0, 240),
+      createdAt: nowIso(),
+    };
   }
 
   static createSourceFromUpload(file: UploadedInputFile): ProjectSource {
     const ext = (file.extension || '').toLowerCase();
-    const kind: ProjectSourceKind = file.mimeType?.startsWith('image/') ? 'image' : ['pdf', 'txt', 'docx'].includes(ext) ? ext : 'reference';
+    const kind: ProjectSourceKind = file.mimeType?.startsWith('image/')
+      ? 'image'
+      : ['pdf', 'txt', 'docx'].includes(ext)
+        ? ext
+        : 'reference';
+
     return {
       id: file.id || uid('src'),
       kind,
@@ -75,7 +94,10 @@ export class MoroCore {
    * Returns one category from the authoritative option service. The service owns
    * option generation; MoroCore only exposes the orchestration boundary.
    */
-  static async generateThree(category: CreativeCategory, context: CreativeContextPayload): Promise<CreativeDecision> {
+  static async generateThree(
+    category: CreativeCategory,
+    context: CreativeContextPayload,
+  ): Promise<CreativeDecision> {
     const decisions = await MoroCreativeOptionService.generateInitialDecisions(context);
     const decision = decisions[category];
     if (!decision) throw new Error(`Unsupported category: ${category}`);
@@ -86,15 +108,29 @@ export class MoroCore {
     return MoroCreativeOptionService.selectOption(decision, optionId);
   }
 
-  static regenerateOne<T>(category: CreativeCategory, optionId: string, decision: CreativeDecision<T>, context: CreativeContextPayload) {
+  static regenerateOne<T>(
+    category: CreativeCategory,
+    optionId: string,
+    decision: CreativeDecision<T>,
+    context: CreativeContextPayload,
+  ) {
     return MoroCreativeOptionService.replaceCategorySingle(category, optionId, decision, context);
   }
 
-  static replaceOption<T>(category: CreativeCategory, optionId: string, decision: CreativeDecision<T>, context: CreativeContextPayload) {
+  static replaceOption<T>(
+    category: CreativeCategory,
+    optionId: string,
+    decision: CreativeDecision<T>,
+    context: CreativeContextPayload,
+  ) {
     return this.regenerateOne(category, optionId, decision, context);
   }
 
-  static regenerateCategory<T>(category: CreativeCategory, decision: CreativeDecision<T>, context: CreativeContextPayload) {
+  static regenerateCategory<T>(
+    category: CreativeCategory,
+    decision: CreativeDecision<T>,
+    context: CreativeContextPayload,
+  ) {
     return MoroCreativeOptionService.replaceCategoryAll(category, decision, context);
   }
 
@@ -110,18 +146,25 @@ export class MoroCore {
     return aiRouter.executeWithFallback(request, action);
   }
 
-  static assembleCreativePackage(projectTitle: string, decisions: ProjectCreativeDecisions, projectId?: string): CreativePackage {
-    const selections: CreativePackageSelection[] = Object.values(decisions).filter(Boolean).map((decision) => {
-      const selected = decision.options.find((option) => option.id === decision.selectedOptionId);
-      return {
-        category: decision.category,
-        categoryLabelEn: decision.categoryLabelEn,
-        categoryLabelAr: decision.categoryLabelAr,
-        selectedOptionId: decision.selectedOptionId,
-        optionTitle: selected?.title || '',
-        state: decision.generationStatus === 'rejected' ? 'rejected' : 'ready',
-      };
-    });
+  static assembleCreativePackage(
+    projectTitle: string,
+    decisions: ProjectCreativeDecisions,
+    projectId?: string,
+  ): CreativePackage {
+    const selections: CreativePackageSelection[] = Object.values(decisions)
+      .filter(Boolean)
+      .map((decision) => {
+        const selected = decision.options.find((option) => option.id === decision.selectedOptionId);
+        return {
+          category: decision.category,
+          categoryLabelEn: decision.categoryLabelEn,
+          categoryLabelAr: decision.categoryLabelAr,
+          selectedOptionId: decision.selectedOptionId,
+          optionTitle: selected?.title || '',
+          state: decision.generationStatus === 'rejected' ? 'rejected' : 'ready',
+        };
+      });
+
     return { projectId, projectTitle, selections, createdAt: nowIso() };
   }
 
@@ -138,7 +181,7 @@ export class MoroCore {
     { id: 'editing', labelEn: 'Video Editing', labelAr: 'المونتاج', status: 'planned', producesOptions: false },
   ];
 
-  static getActiveModules() {
+  static getActiveModules(): CreativeModuleDescriptor[] {
     return this.modules.filter((module) => module.status === 'active');
   }
 }
