@@ -92,6 +92,20 @@ export class MoroCore {
     });
   }
 
+  /** Builds the option-service payload from the authoritative shared context. */
+  static buildCreativeContextFromInput(params: {
+    projectId?: string;
+    rawText: string;
+    uploadedFiles?: UploadedInputFile[];
+    understanding: UnderstandingBuildParams;
+    title: string;
+    style: string;
+    targetDurationSeconds: number;
+    aspectRatio: string;
+  }): CreativeContextPayload {
+    return this.toCreativeContext(this.buildProjectContextFromInput(params));
+  }
+
   /** ContentUnderstandingService remains authoritative behind this adapter boundary. */
   static buildUnderstanding = ContentUnderstandingAdapter.buildUnderstanding;
 
