@@ -1,5 +1,5 @@
 import { CreativeCategory, CreativeDecision, ProjectCreativeDecisions, UploadedInputFile } from '../../types/creative-options';
-import { ProjectUnderstanding } from '../../types/content-understanding';
+import { ProjectUnderstanding, UnderstandingBuildParams } from '../../types/content-understanding';
 import { RouteRequest } from '../../types/ai-router';
 import {
   CreativeModuleDescriptor,
@@ -69,6 +69,29 @@ export class MoroCore {
     return ContentUnderstandingAdapter.toMoroProjectContext(params.understanding, params);
   }
 
+  /** Builds the single shared context from UI/Base44 input through the adapter. */
+  static buildProjectContextFromInput(params: {
+    projectId?: string;
+    rawText: string;
+    uploadedFiles?: UploadedInputFile[];
+    understanding: UnderstandingBuildParams;
+    title: string;
+    style: string;
+    targetDurationSeconds: number;
+    aspectRatio: string;
+  }): MoroProjectContext {
+    const understanding = ContentUnderstandingAdapter.buildUnderstanding(params.understanding);
+    return this.buildProjectContext({
+      projectId: params.projectId,
+      title: params.title,
+      sources: this.sourcesFromInput(params.rawText, params.uploadedFiles),
+      style: params.style,
+      targetDurationSeconds: params.targetDurationSeconds,
+      aspectRatio: params.aspectRatio,
+      understanding,
+    });
+  }
+
   /** ContentUnderstandingService remains authoritative behind this adapter boundary. */
   static buildUnderstanding = ContentUnderstandingAdapter.buildUnderstanding;
 
@@ -90,14 +113,7 @@ export class MoroCore {
     return MoroCreativeOptionService.generateInitialDecisions(context);
   }
 
-  /**
-   * Returns one category from the authoritative option service. The service owns
-   * option generation; MoroCore only exposes the orchestration boundary.
-   */
-  static async generateThree(
-    category: CreativeCategory,
-    context: CreativeContextPayload,
-  ): Promise<CreativeDecision> {
+  static async generateThree(category: CreativeCategory, context: CreativeContextPayload): Promise<CreativeDecision> {
     const decisions = await MoroCreativeOptionService.generateInitialDecisions(context);
     const decision = decisions[category];
     if (!decision) throw new Error(`Unsupported category: ${category}`);
@@ -108,29 +124,15 @@ export class MoroCore {
     return MoroCreativeOptionService.selectOption(decision, optionId);
   }
 
-  static regenerateOne<T>(
-    category: CreativeCategory,
-    optionId: string,
-    decision: CreativeDecision<T>,
-    context: CreativeContextPayload,
-  ) {
+  static regenerateOne<T>(category: CreativeCategory, optionId: string, decision: CreativeDecision<T>, context: CreativeContextPayload) {
     return MoroCreativeOptionService.replaceCategorySingle(category, optionId, decision, context);
   }
 
-  static replaceOption<T>(
-    category: CreativeCategory,
-    optionId: string,
-    decision: CreativeDecision<T>,
-    context: CreativeContextPayload,
-  ) {
+  static replaceOption<T>(category: CreativeCategory, optionId: string, decision: CreativeDecision<T>, context: CreativeContextPayload) {
     return this.regenerateOne(category, optionId, decision, context);
   }
 
-  static regenerateCategory<T>(
-    category: CreativeCategory,
-    decision: CreativeDecision<T>,
-    context: CreativeContextPayload,
-  ) {
+  static regenerateCategory<T>(category: CreativeCategory, decision: CreativeDecision<T>, context: CreativeContextPayload) {
     return MoroCreativeOptionService.replaceCategoryAll(category, decision, context);
   }
 
@@ -146,25 +148,18 @@ export class MoroCore {
     return aiRouter.executeWithFallback(request, action);
   }
 
-  static assembleCreativePackage(
-    projectTitle: string,
-    decisions: ProjectCreativeDecisions,
-    projectId?: string,
-  ): CreativePackage {
-    const selections: CreativePackageSelection[] = Object.values(decisions)
-      .filter(Boolean)
-      .map((decision) => {
-        const selected = decision.options.find((option) => option.id === decision.selectedOptionId);
-        return {
-          category: decision.category,
-          categoryLabelEn: decision.categoryLabelEn,
-          categoryLabelAr: decision.categoryLabelAr,
-          selectedOptionId: decision.selectedOptionId,
-          optionTitle: selected?.title || '',
-          state: decision.generationStatus === 'rejected' ? 'rejected' : 'ready',
-        };
-      });
-
+  static assembleCreativePackage(projectTitle: string, decisions: ProjectCreativeDecisions, projectId?: string): CreativePackage {
+    const selections: CreativePackageSelection[] = Object.values(decisions).filter(Boolean).map((decision) => {
+      const selected = decision.options.find((option) => option.id === decision.selectedOptionId);
+      return {
+        category: decision.category,
+        categoryLabelEn: decision.categoryLabelEn,
+        categoryLabelAr: decision.categoryLabelAr,
+        selectedOptionId: decision.selectedOptionId,
+        optionTitle: selected?.title || '',
+        state: decision.generationStatus === 'rejected' ? 'rejected' : 'ready',
+      };
+    });
     return { projectId, projectTitle, selections, createdAt: nowIso() };
   }
 
